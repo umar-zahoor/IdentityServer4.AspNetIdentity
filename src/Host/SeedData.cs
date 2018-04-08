@@ -8,6 +8,7 @@ using System.Security.Claims;
 using Host.Data;
 using Host.Models;
 using IdentityModel;
+using IdentityServer4;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,14 +24,17 @@ namespace Host
                 var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
                 context.Database.Migrate();
 
-                var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                #region Ensure Users
+
+                var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApiUser>>();
                 var alice = userMgr.FindByNameAsync("alice").Result;
                 if (alice == null)
                 {
-                    alice = new ApplicationUser
+                    alice = new ApiUser
                     {
                         UserName = "alice"
                     };
+
                     var result = userMgr.CreateAsync(alice, "Pass123$").Result;
                     if (!result.Succeeded)
                     {
@@ -44,7 +48,7 @@ namespace Host
                         new Claim(JwtClaimTypes.Email, "AliceSmith@email.com"),
                         new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
                         new Claim(JwtClaimTypes.WebSite, "http://alice.com"),
-                        new Claim(JwtClaimTypes.Address, @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }", IdentityServer4.IdentityServerConstants.ClaimValueTypes.Json)
+                        new Claim(JwtClaimTypes.Address, @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }", IdentityServerConstants.ClaimValueTypes.Json)
                     }).Result;
                     if (!result.Succeeded)
                     {
@@ -60,7 +64,7 @@ namespace Host
                 var bob = userMgr.FindByNameAsync("bob").Result;
                 if (bob == null)
                 {
-                    bob = new ApplicationUser
+                    bob = new ApiUser
                     {
                         UserName = "bob"
                     };
@@ -77,7 +81,7 @@ namespace Host
                         new Claim(JwtClaimTypes.Email, "BobSmith@email.com"),
                         new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
                         new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
-                        new Claim(JwtClaimTypes.Address, @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }", IdentityServer4.IdentityServerConstants.ClaimValueTypes.Json),
+                        new Claim(JwtClaimTypes.Address, @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }", IdentityServerConstants.ClaimValueTypes.Json),
                         new Claim("location", "somewhere")
                     }).Result;
                     if (!result.Succeeded)
@@ -90,6 +94,9 @@ namespace Host
                 {
                     Console.WriteLine("bob already exists");
                 }
+
+                #endregion
+
             }
         }
     }

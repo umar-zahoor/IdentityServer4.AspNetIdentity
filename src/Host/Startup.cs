@@ -25,7 +25,7 @@ namespace Host
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddIdentity<ApiUser, ApiRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
@@ -36,7 +36,7 @@ namespace Host
                 .AddInMemoryIdentityResources(Resources.GetIdentityResources())
                 .AddInMemoryApiResources(Resources.GetApiResources())
                 .AddInMemoryClients(Clients.Get())
-                .AddAspNetIdentity<ApplicationUser>();
+                .AddAspNetIdentity<ApiUser>();
 
             services.AddAuthentication()
                 .AddGoogle(options =>
