@@ -18,10 +18,7 @@ namespace Host
             var host = BuildWebHost(args);
 
             if (seed)
-            {
-                SeedData.EnsureSeedData(host.Services);
-                return;
-            }
+                SeedData.EnsureSeedData(host.Services).Wait();
 
             host.Run();
         }

@@ -10,11 +10,10 @@ using System;
 
 namespace Host.Migrations
 {
-    [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20180408063919_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(ApiDbContext))]
+    partial class ApiDbContextModelSnapshot : ModelSnapshot
     {
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

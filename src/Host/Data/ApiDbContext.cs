@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Host.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApiUser, ApiRole, Guid>
+    public class ApiDbContext : IdentityDbContext<ApiUser, ApiRole, Guid>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public ApiDbContext(DbContextOptions<ApiDbContext> options)
             : base(options)
         {
         }
@@ -16,9 +16,12 @@ namespace Host.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
             // Customize the ASP.NET Identity model and override the defaults if needed.
             // For example, you can rename the ASP.NET Identity table names and more.
             // Add your customizations after calling base.OnModelCreating(builder);
+
+            #region Schema Customizations
 
             builder.Entity<ApiUser>(typeBuilder =>
             {
@@ -35,12 +38,12 @@ namespace Host.Data
             builder.Entity<IdentityUserRole<Guid>>(typeBuilder =>
             {
                 typeBuilder.ToTable("UserRoles");
-                typeBuilder.HasKey(x => new { x.RoleId, x.UserId });
+                typeBuilder.HasKey(x => new {x.RoleId, x.UserId});
             });
             builder.Entity<IdentityUserLogin<Guid>>(typeBuilder =>
             {
                 typeBuilder.ToTable("UserLogins");
-                typeBuilder.HasKey(x => new { x.ProviderKey, x.LoginProvider });
+                typeBuilder.HasKey(x => new {x.ProviderKey, x.LoginProvider});
             });
             builder.Entity<IdentityRoleClaim<Guid>>(typeBuilder =>
             {
@@ -57,6 +60,8 @@ namespace Host.Data
                 typeBuilder.ToTable("UserTokens");
                 typeBuilder.HasKey(x => x.UserId);
             });
+
+            #endregion
         }
     }
 }

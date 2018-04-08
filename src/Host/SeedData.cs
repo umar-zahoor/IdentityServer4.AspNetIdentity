@@ -5,10 +5,15 @@
 using System;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using Host.Configuration;
 using Host.Data;
 using Host.Models;
 using IdentityModel;
 using IdentityServer4;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Interfaces;
+using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,86 +22,166 @@ namespace Host
 {
     public class SeedData
     {
-        public static void EnsureSeedData(IServiceProvider serviceProvider)
+        public static async Task EnsureSeedData(IServiceProvider serviceProvider)
         {
             using (var scope = serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
-                context.Database.Migrate();
-
-                #region Ensure Users
-
-                var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApiUser>>();
-                var alice = userMgr.FindByNameAsync("alice").Result;
-                if (alice == null)
+                scope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
                 {
-                    alice = new ApiUser
-                    {
-                        UserName = "alice"
-                    };
-
-                    var result = userMgr.CreateAsync(alice, "Pass123$").Result;
-                    if (!result.Succeeded)
-                    {
-                        throw new Exception(result.Errors.First().Description);
-                    }
-
-                    result = userMgr.AddClaimsAsync(alice, new Claim[]{
-                        new Claim(JwtClaimTypes.Name, "Alice Smith"),
-                        new Claim(JwtClaimTypes.GivenName, "Alice"),
-                        new Claim(JwtClaimTypes.FamilyName, "Smith"),
-                        new Claim(JwtClaimTypes.Email, "AliceSmith@email.com"),
-                        new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
-                        new Claim(JwtClaimTypes.WebSite, "http://alice.com"),
-                        new Claim(JwtClaimTypes.Address, @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }", IdentityServerConstants.ClaimValueTypes.Json)
-                    }).Result;
-                    if (!result.Succeeded)
-                    {
-                        throw new Exception(result.Errors.First().Description);
-                    }
-                    Console.WriteLine("alice created");
-                }
-                else
-                {
-                    Console.WriteLine("alice already exists");
+                    var context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+                    context.Database.Migrate();
+                    EnsureSeedData(context).Wait();
                 }
 
-                var bob = userMgr.FindByNameAsync("bob").Result;
-                if (bob == null)
                 {
-                    bob = new ApiUser
+                    var context = scope.ServiceProvider.GetRequiredService<ApiDbContext>();
+                    context.Database.Migrate();
+
+                    #region Ensure Users
+
+                    var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApiUser>>();
+                    var alice = await userMgr.FindByNameAsync("alice");
+                    if (alice == null)
                     {
-                        UserName = "bob"
-                    };
-                    var result = userMgr.CreateAsync(bob, "Pass123$").Result;
-                    if (!result.Succeeded)
+                        alice = new ApiUser
+                        {
+                            UserName = "alice"
+                        };
+
+                        var result = await userMgr.CreateAsync(alice, "Pass123$");
+                        if (!result.Succeeded)
+                        {
+                            throw new Exception(result.Errors.First().Description);
+                        }
+
+                        result = await userMgr.AddClaimsAsync(alice, new Claim[]
+                        {
+                            new Claim(JwtClaimTypes.Name, "Alice Smith"),
+                            new Claim(JwtClaimTypes.GivenName, "Alice"),
+                            new Claim(JwtClaimTypes.FamilyName, "Smith"),
+                            new Claim(JwtClaimTypes.Email, "AliceSmith@email.com"),
+                            new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
+                            new Claim(JwtClaimTypes.WebSite, "http://alice.com"),
+                            new Claim(JwtClaimTypes.Address,
+                                @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }",
+                                IdentityServerConstants.ClaimValueTypes.Json)
+                        });
+                        if (!result.Succeeded)
+                        {
+                            throw new Exception(result.Errors.First().Description);
+                        }
+
+                        Console.WriteLine("alice created");
+                    }
+                    else
                     {
-                        throw new Exception(result.Errors.First().Description);
+                        Console.WriteLine("alice already exists");
                     }
 
-                    result = userMgr.AddClaimsAsync(bob, new Claim[]{
-                        new Claim(JwtClaimTypes.Name, "Bob Smith"),
-                        new Claim(JwtClaimTypes.GivenName, "Bob"),
-                        new Claim(JwtClaimTypes.FamilyName, "Smith"),
-                        new Claim(JwtClaimTypes.Email, "BobSmith@email.com"),
-                        new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
-                        new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
-                        new Claim(JwtClaimTypes.Address, @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }", IdentityServerConstants.ClaimValueTypes.Json),
-                        new Claim("location", "somewhere")
-                    }).Result;
-                    if (!result.Succeeded)
+                    var bob = await userMgr.FindByNameAsync("bob");
+                    if (bob == null)
                     {
-                        throw new Exception(result.Errors.First().Description);
+                        bob = new ApiUser
+                        {
+                            UserName = "bob"
+                        };
+                        var result = await userMgr.CreateAsync(bob, "Pass123$");
+                        if (!result.Succeeded)
+                        {
+                            throw new Exception(result.Errors.First().Description);
+                        }
+
+                        result = await userMgr.AddClaimsAsync(bob, new Claim[]
+                        {
+                            new Claim(JwtClaimTypes.Name, "Bob Smith"),
+                            new Claim(JwtClaimTypes.GivenName, "Bob"),
+                            new Claim(JwtClaimTypes.FamilyName, "Smith"),
+                            new Claim(JwtClaimTypes.Email, "BobSmith@email.com"),
+                            new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
+                            new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
+                            new Claim(JwtClaimTypes.Address,
+                                @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }",
+                                IdentityServerConstants.ClaimValueTypes.Json),
+                            new Claim("location", "somewhere")
+                        });
+                        if (!result.Succeeded)
+                        {
+                            throw new Exception(result.Errors.First().Description);
+                        }
+
+                        Console.WriteLine("bob created");
                     }
-                    Console.WriteLine("bob created");
+                    else
+                    {
+                        Console.WriteLine("bob already exists");
+                    }
+
+                    #endregion
+
+                    #region Ensure Roles
+
+                    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApiRole>>();
+
+                    var roleExists = await roleManager.RoleExistsAsync("superuser");
+
+                    if (!roleExists)
+                    {
+                        var role = new ApiRole {Name = "superuser"};
+                        var result = await roleManager.CreateAsync(role);
+
+                        if (result.Succeeded)
+                        {
+                            await userMgr.AddToRoleAsync(alice, role.Name);
+                        }
+                    }
+
+                    #endregion
                 }
-                else
+            }
+        }
+
+        private static async Task EnsureSeedData(ConfigurationDbContext context)
+        {
+            if (!context.Clients.Any())
+            {
+                Console.WriteLine("Clients being populated");
+                foreach (var client in TestConfig.GetClients().ToList())
                 {
-                    Console.WriteLine("bob already exists");
+                    context.Clients.Add(client.ToEntity());
                 }
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                Console.WriteLine("Clients already populated");
+            }
 
-                #endregion
+            if (!context.IdentityResources.Any())
+            {
+                Console.WriteLine("IdentityResources being populated");
+                foreach (var resource in TestConfig.GetIdentityResources().ToList())
+                {
+                    context.IdentityResources.Add(resource.ToEntity());
+                }
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                Console.WriteLine("IdentityResources already populated");
+            }
 
+            if (!context.ApiResources.Any())
+            {
+                Console.WriteLine("ApiResources being populated");
+                foreach (var resource in TestConfig.GetApiResources().ToList())
+                {
+                    context.ApiResources.Add(resource.ToEntity());
+                }
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                Console.WriteLine("ApiResources already populated");
             }
         }
     }

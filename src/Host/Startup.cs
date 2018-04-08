@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using System.Reflection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
@@ -6,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Host.Data;
 using Host.Models;
-using Host.Configuration;
 
 namespace Host
 {
@@ -20,23 +21,40 @@ namespace Host
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
+
+            services.AddDbContext<ApiDbContext>(options =>
+                options.UseSqlServer(connectionString));
 
             services.AddIdentity<ApiUser, ApiRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddEntityFrameworkStores<ApiDbContext>()
                 .AddDefaultTokenProviders();
 
             services.AddMvc();
 
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
-                .AddInMemoryIdentityResources(Resources.GetIdentityResources())
-                .AddInMemoryApiResources(Resources.GetApiResources())
-                .AddInMemoryClients(Clients.Get())
-                .AddAspNetIdentity<ApiUser>();
+                .AddAspNetIdentity<ApiUser>()
+                // this adds the config data from DB (clients, resources, CORS)
+                .AddConfigurationStore(options =>
+                {
+                    options.ResolveDbContextOptions = (provider, builder) =>
+                    {
+                        builder.UseSqlServer(connectionString,
+                            sql => sql.MigrationsAssembly(migrationsAssembly));
+                    };
+                })
+                // this adds the operational data from DB (codes, tokens, consents)
+                .AddOperationalStore(options =>
+                {
+                    options.ConfigureDbContext = builder =>
+                        builder.UseSqlServer(connectionString,
+                            sql => sql.MigrationsAssembly(migrationsAssembly));
+                });
 
             services.AddAuthentication()
                 .AddGoogle(options =>
@@ -50,6 +68,12 @@ namespace Host
             //{
             //    options.ValidationInterval = TimeSpan.FromSeconds(30);
             //});
+
+            services.AddTransient<RoleManager<ApiRole>>();
+            services.AddTransient<ApiDbContext>();
+
+            return services.BuildServiceProvider(validateScopes: true);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

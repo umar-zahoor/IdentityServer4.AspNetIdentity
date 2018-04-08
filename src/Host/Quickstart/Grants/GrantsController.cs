@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Host.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace IdentityServer4.Quickstart.UI
 {
@@ -22,14 +24,17 @@ namespace IdentityServer4.Quickstart.UI
         private readonly IIdentityServerInteractionService _interaction;
         private readonly IClientStore _clients;
         private readonly IResourceStore _resources;
+        private readonly UserManager<ApiUser> _userManager;
 
         public GrantsController(IIdentityServerInteractionService interaction,
             IClientStore clients,
-            IResourceStore resources)
+            IResourceStore resources,
+            UserManager<ApiUser> userManager)
         {
             _interaction = interaction;
             _clients = clients;
             _resources = resources;
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -38,6 +43,10 @@ namespace IdentityServer4.Quickstart.UI
         [HttpGet]
         public async Task<IActionResult> Index()
         {
+            var isSuperUser = HttpContext.User.IsInRole("superuser");
+
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
             return View("Index", await BuildViewModelAsync());
         }
 
