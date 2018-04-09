@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Host.Migrations.PersistedGrantDb
 {
-    public partial class InitialGrantSchema : Migration
+    public partial class PersistedGrantDbSchema : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

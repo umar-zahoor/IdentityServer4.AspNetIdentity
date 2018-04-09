@@ -11,8 +11,8 @@ using System;
 namespace Host.Migrations.ConfigurationDb
 {
     [DbContext(typeof(ConfigurationDbContext))]
-    [Migration("20180408160321_InitialConfigSchema")]
-    partial class InitialConfigSchema
+    [Migration("20180409053211_ConfigurationDbSchema")]
+    partial class ConfigurationDbSchema
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

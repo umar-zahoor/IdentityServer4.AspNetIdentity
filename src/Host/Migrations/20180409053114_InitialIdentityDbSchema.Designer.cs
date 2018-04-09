@@ -11,8 +11,8 @@ using System;
 namespace Host.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    [Migration("20180408160013_InitalIdentitySchema")]
-    partial class InitalIdentitySchema
+    [Migration("20180409053114_InitialIdentityDbSchema")]
+    partial class InitialIdentityDbSchema
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

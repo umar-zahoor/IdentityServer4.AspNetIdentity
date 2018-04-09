@@ -10,8 +10,8 @@ using System;
 namespace Host.Migrations.PersistedGrantDb
 {
     [DbContext(typeof(PersistedGrantDbContext))]
-    [Migration("20180408160925_InitialGrantSchema")]
-    partial class InitialGrantSchema
+    [Migration("20180409053251_PersistedGrantDbSchema")]
+    partial class PersistedGrantDbSchema
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Host.Migrations.ConfigurationDb
 {
-    public partial class InitialConfigSchema : Migration
+    public partial class ConfigurationDbSchema : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

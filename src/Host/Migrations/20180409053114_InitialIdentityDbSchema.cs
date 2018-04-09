@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Host.Migrations
 {
-    public partial class InitalIdentitySchema : Migration
+    public partial class InitialIdentityDbSchema : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
